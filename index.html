@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kokkarakoooo 🐔</title>
+  <title>Chicken Translator 🐔</title>
   <style>
     body {
       font-family: Comic Sans MS, cursive, sans-serif;
@@ -13,10 +13,11 @@
       padding: 50px;
       overflow-x: hidden;
       position: relative;
-      color: white; 
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.6); 
+      color: white; /* ensures text is readable */
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6); /* improves contrast */
     }
 
+    /* Slight dark overlay for readability */
     body::before {
       content: "";
       position: fixed;
@@ -82,7 +83,7 @@
   </style>
 </head>
 <body>
-  <h1>🐣 Kokkarakoooo</h1>
+  <h1>🐣 Chicken Translator</h1>
   <textarea id="userInput" placeholder="Type anything human..."></textarea><br>
   <button onclick="translateToChicken()">Translate to Chicken</button>
   <div id="output"></div>
@@ -91,9 +92,6 @@
   <audio id="chicken1" src="chickens-107708.mp3" preload="auto"></audio>
   <audio id="chicken2" src="cock-92199.mp3" preload="auto"></audio>
   <audio id="chicken3" src="chickens-2-341010.mp3" preload="auto"></audio>
-  <audio id="chicken3" src="chicken-coop-inside-sounds-180126.mp3" preload="auto"></audio>
-  <audio id="chicken3" src="chicken-46803.mp3" preload="auto"></audio>
-
 
   <script>
     function translateToChicken() {
