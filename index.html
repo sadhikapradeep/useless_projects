@@ -3,16 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chicken Translator 🐔</title>
+  <title>Kokkarakoooo 🐔</title>
   <style>
     body {
       font-family: Comic Sans MS, cursive, sans-serif;
-      background: #fffbe7;
+      background: url('1.jpg') no-repeat center center fixed;
+      background-size: cover;
       text-align: center;
       padding: 50px;
+      overflow-x: hidden;
+      position: relative;
+      color: white; 
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6); 
     }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.3);
+      z-index: -1;
+    }
+
     h1 {
       font-size: 2.5rem;
+      animation: bounceTitle 2s infinite alternate;
+    }
+    @keyframes bounceTitle {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
     }
     textarea {
       width: 80%;
@@ -20,6 +39,9 @@
       margin: 20px auto;
       padding: 10px;
       font-size: 1.2rem;
+      border-radius: 8px;
+      border: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
     }
     button {
       font-size: 1.2rem;
@@ -29,33 +51,48 @@
       cursor: pointer;
       border-radius: 5px;
       margin: 5px;
-      transition: background-color 0.3s ease;
+      transition: transform 0.1s ease, background-color 0.3s ease;
     }
     button:hover {
       background-color: #ffe98d;
+      transform: scale(1.05);
     }
     #output {
       font-size: 2rem;
-      color: #aa5500;
+      color: #ffddaa;
       margin-top: 30px;
+      display: inline-block;
+      animation: popIn 0.5s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .emoji {
+      position: fixed;
+      font-size: 2rem;
+      animation: floatUp 3s linear forwards;
+      pointer-events: none;
+      z-index: 999;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <h1>🐣 Chicken Translator</h1>
+  <h1>🐣 Kokkarakoooo</h1>
   <textarea id="userInput" placeholder="Type anything human..."></textarea><br>
   <button onclick="translateToChicken()">Translate to Chicken</button>
-  <button onclick="testSound()">🔊 Play Sound Test</button>
   <div id="output"></div>
 
-  <!-- Reliable Chicken Sounds -->
+  <!-- Chicken Sounds -->
   <audio id="chicken1" src="chickens-107708.mp3" preload="auto"></audio>
-  <audio id="chicken2" src="chickens-2-341010.mp3" preload="auto"></audio>
-  <audio id="chicken3" src="cock-92199.mp3" preload="auto"></audio>
-  <audio id="chicken4" src="chicken-46803.mp3" preload="auto"></audio>
-  <audio id="chicken5" src="cock-92199.mp3" preload="auto"></audio>
-  <audio id="chicken6" src="chicken-coop-inside-sounds-180126.mp3" preload="auto"></audio>
-
+  <audio id="chicken2" src="cock-92199.mp3" preload="auto"></audio>
+  <audio id="chicken3" src="chickens-2-341010.mp3" preload="auto"></audio>
+  <audio id="chicken3" src="chicken-coop-inside-sounds-180126.mp3" preload="auto"></audio>
+  <audio id="chicken3" src="chicken-46803.mp3" preload="auto"></audio>
 
 
   <script>
@@ -82,7 +119,12 @@
       }
 
       output.innerText = chickenTranslation.trim();
+      output.style.animation = "none";
+      output.offsetHeight;
+      output.style.animation = "popIn 0.5s ease";
+
       playRandomChickenSound();
+      launchEmojis();
     }
 
     function playRandomChickenSound() {
@@ -91,7 +133,6 @@
         document.getElementById("chicken2"),
         document.getElementById("chicken3")
       ];
-
       const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
       try {
         randomSound.currentTime = 0;
@@ -103,18 +144,31 @@
       }
     }
 
-    // Manual test function to verify if sound is working
     function testSound() {
       const testAudio = document.getElementById("chicken1");
       try {
         testAudio.currentTime = 0;
         testAudio.play().catch(err => {
           alert("Audio playback failed. Try clicking again or unmute your tab.");
-          console.error(err);
         });
       } catch (err) {
         alert("Audio failed to play.");
-        console.error(err);
+      }
+    }
+
+    function launchEmojis() {
+      const emojis = ["🐔", "🥚", "🌽","🐔", "🥚", "🌽"];
+      for (let i = 0; i < 5; i++) {
+        const emoji = document.createElement("div");
+        emoji.classList.add("emoji");
+        emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.left = Math.random() * 100 + "vw";
+        emoji.style.bottom = "0px";
+        document.body.appendChild(emoji);
+
+        setTimeout(() => {
+          emoji.remove();
+        }, 3000);
       }
     }
   </script>
