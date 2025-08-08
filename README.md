@@ -1,4 +1,4 @@
-<img width="1902" height="880" alt="image" src="https://github.com/user-attachments/assets/7d080fce-ffde-4740-a4f5-b910608ede9f" /><img width="3188" height="1202" alt="frame (3)" src="https://github.com/user-attachments/assets/517ad8e9-ad22-457d-9538-a9e62d137cd7" />
+<img width="3188" height="1202" alt="frame (3)" src="https://github.com/user-attachments/assets/517ad8e9-ad22-457d-9538-a9e62d137cd7" />
 
 
 # 🐣Kokarakkooo
@@ -33,7 +33,7 @@ For Software:
 For Software:
 
 # Screenshots (Add at least 3)
-<img width="1902" height="880" alt="image" src="1.jpg"  />
+<img width="192" height="80" alt="image" src="https://github.com/user-attachments/assets/7d080fce-ffde-4740-a4f5-b910608ede9f" />
 
 
 ![Screenshot2](Add screenshot 2 here with proper name)
