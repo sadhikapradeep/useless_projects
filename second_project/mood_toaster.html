@@ -3,267 +3,434 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🍕 Pizza Slice Alignment Checker</title>
+<title>Don't Drop the Invisible Ball 🏐 (Audio-only)</title>
 <style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:#fffaf0; color:#222; margin:0; padding:20px; display:flex; gap:20px; align-items:flex-start; justify-content:center;}
-  .panel{width:760px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(30,30,50,0.08); padding:16px;}
-  h1{margin:0 0 8px; font-size:20px}
-  .controls{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px}
-  button, input[type=file]{padding:8px 10px; border-radius:8px; border:1px solid #e5e5e5; background:white; cursor:pointer}
-  button.primary{background:#ff8c42; color:white; border:none}
-  canvas{display:block; border-radius:8px; background:#222; max-width:100%; height:auto}
-  .info{margin-top:12px}
-  .stats{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
-  .stat{background:#fff4e8; padding:8px 10px; border-radius:8px; font-weight:600}
-  small{color:#555}
-  .tips{margin-top:10px; font-size:13px; color:#444}
-  .legend{margin-top:8px; display:flex; gap:8px; align-items:center}
-  .dot{width:14px;height:14px;border-radius:4px}
-  .dot.center{background:#2b7cff} .dot.cut{background:#ff4d4d}
-  .bottom{display:flex; gap:8px; margin-top:12px; align-items:center}
-  .report{margin-left:auto}
+  body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: linear-gradient(180deg,#0f1226,#121827); color:#e6eef8; margin:0; display:flex; align-items:center; justify-content:center; height:100vh; }
+  .wrap { width:900px; max-width:95vw; background: linear-gradient(180deg,#0b1220,#0f1b2a); padding:18px; border-radius:12px; box-shadow: 0 10px 40px rgba(2,5,10,0.6); }
+  h1 { margin:0 0 10px; font-size:20px; text-align:center; }
+  .row { display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:10px; flex-wrap:wrap; }
+  button { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; background:#ffd166; color:#0b1020; font-weight:700; }
+  button.secondary { background:#8ecae6; color:#052; }
+  canvas { display:block; background: linear-gradient(180deg,#071022,#092033); border-radius:8px; margin:0 auto; box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
+  .instructions { font-size:13px; color:#a7b6cf; text-align:center; margin-bottom:8px; }
+  .stats { display:flex; gap:12px; justify-content:center; color:#cfe9ff; font-weight:600; margin-top:10px; }
+  .mutebtn { background:#ffe6e6; color:#3a0b0b; }
+  .cheat { background:#bde0fe; color:#012; }
+  footer { font-size:12px; color:#93a6c5; text-align:center; margin-top:8px;}
 </style>
 </head>
 <body>
-  <div class="panel">
-    <h1>🍕 Pizza Slice Alignment Checker</h1>
-    <div class="controls">
-      <input id="fileInput" type="file" accept="image/*">
-      <button id="autoCenterBtn">Auto-Center</button>
-      <button id="clearPointsBtn">Clear Points</button>
-      <button id="analyzeBtn" class="primary">Analyze</button>
-      <button id="downloadBtn">Download Report</button>
+  <div class="wrap">
+    <h1>Don’t Drop the Invisible Ball 🏐 — Audio Only</h1>
+
+    <div class="row instructions">
+      Move the paddle (mouse or touch) left/right. The *ball is invisible* — listen for pings:
+      left/right panning = horizontal position, pitch/volume = vertical distance (higher pitch/volume = closer).
     </div>
 
-    <canvas id="canvas" width="720" height="540"></canvas>
-
-    
-    <div class="legend">
-      <div class="dot center"></div><small>Center</small>
-      <div class="dot cut"></div><small>Marked cut point</small>
+    <div class="row">
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn" class="secondary">Pause</button>
+      <button id="muteBtn" class="mutebtn">Mute</button>
+      <button id="revealBtn" class="cheat">Peek (cheat)</button>
+      <label style="color:#9fb4d6;">
+        Difficulty:
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
     </div>
 
-    <div class="stats" id="statsArea"></div>
+    <canvas id="game" width="860" height="420"></canvas>
 
-    <div class="info" id="details"></div>
+    <div class="stats">
+      <div>Score: <span id="score">0</span></div>
+      <div>Lives: <span id="lives">3</span></div>
+      <div>Bounces: <span id="bounces">0</span></div>
+      <div>Round: <span id="round">1</span></div>
+    </div>
 
-    
+    <footer>
+      Tip: listen for the ping every ~300ms. Pan (left/right) tells horizontal — pitch tells vertical. If you catch it (paddle hit), you'll hear a pop.
+    </footer>
   </div>
 
 <script>
+/* Invisible Ball — Audio-only game
+   - Uses WebAudio for pings, pops, and spatial hints
+   - Player controls paddle left/right with mouse/touch
+   - Ball is invisible; rely on audio cues
+*/
 
-
-const fileInput = document.getElementById('fileInput');
-const autoCenterBtn = document.getElementById('autoCenterBtn');
-const clearPointsBtn = document.getElementById('clearPointsBtn');
-const analyzeBtn = document.getElementById('analyzeBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const canvas = document.getElementById('canvas');
+// Canvas & UI
+const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-const statsArea = document.getElementById('statsArea');
-const details = document.getElementById('details');
-const reportNote = document.getElementById('reportNote');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const muteBtn = document.getElementById('muteBtn');
+const revealBtn = document.getElementById('revealBtn');
+const difficultyEl = document.getElementById('difficulty');
 
-let img = new Image();
-let imgLoaded = false;
-let center = null;      // {x,y}
-let points = [];        // [{x,y,angleDeg}]
-let lastReport = null;
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const bouncesEl = document.getElementById('bounces');
+const roundEl = document.getElementById('round');
 
+let audioCtx = null; // created on first user interaction
+let pingIntervalId = null;
+let muted = false;
+let running = false;
+let reveal = false;
 
-function clearCanvas() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-}
-function draw() {
-  clearCanvas();
-  if (imgLoaded) {
-    const cw = canvas.width, ch = canvas.height;
-    const iw = img.width, ih = img.height;
-    const scale = Math.min(cw/iw, ch/ih);
-    const w = iw * scale, h = ih * scale;
-    const x = (cw - w)/2, y = (ch - h)/2;
-    ctx.drawImage(img, x, y, w, h);
-    ctx.save();
-    if (center) {
-      ctx.fillStyle = '#2b7cff';
-      ctx.fillRect(center.x-6, center.y-6, 12, 12);
-    }
-    if (points.length) {
-      ctx.strokeStyle = 'rgba(255,77,77,0.9)';
-      ctx.fillStyle = 'rgba(255,77,77,1)';
-      ctx.lineWidth = 2;
-      for (let i=0;i<points.length;i++){
-        const p = points[i];
-        if (center) {
-          ctx.beginPath();
-          ctx.moveTo(center.x, center.y);
-          ctx.lineTo(p.x, p.y);
-          ctx.stroke();
-        }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
-        ctx.fill();
-        // angle label
-        ctx.fillStyle = '#222';
-        ctx.font = '14px sans-serif';
-        ctx.fillText((p.angleDeg).toFixed(1) + '°', p.x + 8, p.y - 8);
-        ctx.fillStyle = 'rgba(255,77,77,1)';
-      }
-      if (points.length > 1) {
-        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
-        ctx.closePath();
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
+// Game state
+let score = 0;
+let lives = 3;
+let bounces = 0;
+let round = 1;
+
+// Dimensions
+const W = canvas.width, H = canvas.height;
+const groundY = H - 40;
+
+// Paddle
+const paddle = {
+  w: 160,
+  h: 14,
+  x: W/2 - 80,
+  y: groundY - 6
+};
+
+// Invisible ball (physics)
+let ball = {
+  x: W/2,
+  y: 80,
+  vx: 160, // px/sec
+  vy: 40,
+  r: 12,
+  gravity: 600
+};
+
+// Difficulty settings
+function applyDifficulty() {
+  const d = difficultyEl.value;
+  if (d === 'easy') {
+    ball.gravity = 420;
+    pingInterval = 340;
+    paddle.w = 200;
+  } else if (d === 'normal') {
+    ball.gravity = 600;
+    pingInterval = 300;
+    paddle.w = 160;
   } else {
-    ctx.fillStyle = '#f7f7f7';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = '#999'; ctx.font = '18px sans-serif';
-    ctx.fillText('Upload a pizza photo to start', 20, 40);
+    ball.gravity = 820;
+    pingInterval = 240;
+    paddle.w = 120;
   }
+  paddle.w = paddle.w; // apply
+}
+let pingInterval = 300;
+applyDifficulty();
+difficultyEl.addEventListener('change', () => { applyDifficulty(); });
+
+// user control
+let pointerX = paddle.x + paddle.w/2;
+function updatePaddleFromPointer() {
+  const half = paddle.w/2;
+  paddle.x = Math.max(10, Math.min(W - paddle.w - 10, pointerX - half));
 }
 
-fileInput.addEventListener('change', (e) => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const url = URL.createObjectURL(f);
-  img = new Image();
-  img.onload = () => {
-    imgLoaded = true;
-    center = null; points = []; lastReport = null;
-    draw();
-    URL.revokeObjectURL(url);
-  }
-  img.src = url;
-});
-
-canvas.addEventListener('click', (ev) => {
+// Pointer listeners
+canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
-  const x = ev.clientX - rect.left;
-  const y = ev.clientY - rect.top;
+  pointerX = e.clientX - rect.left;
+  updatePaddleFromPointer();
+});
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  pointerX = e.touches[0].clientX - rect.left;
+  updatePaddleFromPointer();
+}, {passive:false});
 
-  if (!imgLoaded) {
-    alert('Please upload a pizza image first.');
-    return;
+// draw HUD & paddle (ball invisible unless reveal)
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  // background grid
+  ctx.fillStyle = '#071a2a';
+  ctx.fillRect(0,0,W,H);
+
+  // ground strip
+  ctx.fillStyle = '#092734';
+  ctx.fillRect(0, groundY, W, H-groundY);
+
+  // paddle
+  ctx.fillStyle = '#ffd166';
+  ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.14)';
+  ctx.fillRect(paddle.x, paddle.y + paddle.h, paddle.w, 4);
+
+  // hint line (center)
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillRect(W/2 - 1, 0, 2, H);
+
+  // optionally show invisible ball for cheat peek
+  if (reveal) {
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,120,120,0.95)';
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+    ctx.fill();
   }
 
-  if (!center) {
-    center = {x, y};
-    details.innerHTML = '<em>Center set. Now click on the crust where each slice cut meets the edge (one click per cut).</em>';
-    draw();
-    return;
-  }
+  // top guide text
+  ctx.fillStyle = '#bcd7ee';
+  ctx.font = '13px sans-serif';
+  ctx.fillText('Paddle is visible — ball is invisible. Use sound to find it!', 12, 20);
+}
 
-  const angleRad = Math.atan2(y - center.y, x - center.x);
-  let angleDeg = angleRad * 180 / Math.PI; // -180 .. 180
-  if (angleDeg < 0) angleDeg += 360;       // 0 .. 360
-  points.push({x, y, angleDeg});
-  points.sort((a,b) => a.angleDeg - b.angleDeg);
-  draw();
-});
+// physics update
+let lastTime = null;
+function step(ts) {
+  if (!running) return;
+  if (!lastTime) lastTime = ts;
+  const dt = Math.min(0.05, (ts - lastTime)/1000); // prevent large jumps
+  lastTime = ts;
 
-// auto-center implementation (simple heuristic: center of image area)
-autoCenterBtn.addEventListener('click', () => {
-  if (!imgLoaded) { alert('Upload an image first.'); return; }
-  // set center to canvas center (user still can override by clicking)
-  center = { x: canvas.width/2, y: canvas.height/2 };
-  details.innerHTML = '<em>Auto-center set (canvas center). You can click to set a different center.</em>';
-  draw();
-});
+  // integrate
+  ball.vy += ball.gravity * dt;
+  ball.x += ball.vx * dt;
+  ball.y += ball.vy * dt;
 
-// clear points
-clearPointsBtn.addEventListener('click', () => {
-  center = null; points = []; details.innerHTML = ''; statsArea.innerHTML=''; reportNote.innerHTML='';
-  lastReport = null;
-  draw();
-});
+  // wall bounce left/right
+  if (ball.x - ball.r <= 0) { ball.x = ball.r; ball.vx = -ball.vx; playWallBounce(); }
+  if (ball.x + ball.r >= W) { ball.x = W - ball.r; ball.vx = -ball.vx; playWallBounce(); }
 
-// analyze
-analyzeBtn.addEventListener('click', () => {
+  // top bounce
+  if (ball.y - ball.r <= 0) { ball.y = ball.r; ball.vy = -Math.abs(ball.vy)*0.9; playWallBounce(); }
 
-  // compute slice angles (differences between successive point angles, account for wrap)
-  const angles = points.map(p => p.angleDeg).sort((a,b)=>a-b);
-  const diffs = [];
-  for (let i=0;i<angles.length;i++){
-    const a1 = angles[i];
-    const a2 = angles[(i+1) % angles.length];
-    // angular difference clockwise from a1 to a2
-    let diff = a2 - a1;
-    if (i === angles.length - 1) { // wrap-around
-      diff = (angles[0] + 360) - angles[i];
+  // paddle collision detection: if ball crosses paddle top and within paddle horizontal range while falling
+  if (ball.vy > 0 && (ball.y + ball.r) >= paddle.y && (ball.y - ball.r) <= paddle.y + paddle.h) {
+    // check horizontal overlap
+    if (ball.x >= paddle.x && ball.x <= paddle.x + paddle.w) {
+      // reflect with small randomness based on hit position
+      ball.y = paddle.y - ball.r - 0.5;
+      ball.vy = -Math.abs(ball.vy) * (0.85 + Math.random() * 0.25);
+      // tweak vx depending on where on paddle it hit (gives player control)
+      const hitNorm = ((ball.x - paddle.x) / paddle.w) - 0.5; // -0.5 .. 0.5
+      ball.vx += hitNorm * 450;
+      bounces++;
+      score += 10;
+      playPop(true);
     }
-    // normalize diff into (0,360)
-    if (diff < 0) diff += 360;
-    diffs.push(diff);
   }
 
-  // compute stats: mean, std, min, max
-  const n = diffs.length;
-  const mean = diffs.reduce((s,v)=>s+v,0) / n;
-  const variance = diffs.reduce((s,v)=>s + Math.pow(v - mean, 2), 0) / n;
-  const std = Math.sqrt(variance);
-  const min = Math.min(...diffs);
-  const max = Math.max(...diffs);
-
-  // verdict rules (tweakable)
-  // If std < 3 degrees -> nearly perfect; <8 pretty good; else uneven
-  let verdict = '';
-  if (std <= 3) verdict = 'Mathematically perfect 🍕✅ — looks expertly sliced!';
-  else if (std <= 8) verdict = 'Pretty good — slightly uneven but acceptable.';
-  else verdict = 'Criminally uneven ⚖️🚨 — blame the chef or the table spinner.';
-
-  // present results
-  statsArea.innerHTML = `
-    <div class="stat">Slices detected: ${n}</div>
-    <div class="stat">Mean angle: ${mean.toFixed(2)}°</div>
-    <div class="stat">Std dev: ${std.toFixed(2)}°</div>
-    <div class="stat">Smallest slice: ${min.toFixed(2)}°</div>
-    <div class="stat">Largest slice: ${max.toFixed(2)}°</div>
-  `;
-
-  // detailed list of slices
-  let detailHtml = `<h3>Slice angles (clockwise, in degrees):</h3><ol>`;
-  for (let i=0;i<diffs.length;i++){
-    detailHtml += `<li>${diffs[i].toFixed(2)}°</li>`;
+  // missed: ball hits ground
+  if (ball.y - ball.r > H) {
+    lives--;
+    playMiss();
+    if (lives <= 0) {
+      endGame();
+      return;
+    } else {
+      resetBallAfterMiss();
+    }
   }
-  detailHtml += `</ol><p><strong>Verdict:</strong> ${verdict}</p>`;
-  details.innerHTML = detailHtml;
 
-  // store last report for download
-  lastReport = {
-    timestamp: new Date().toISOString(),
-    slices: diffs.map(d => Number(d.toFixed(4))),
-    mean: Number(mean.toFixed(4)),
-    std: Number(std.toFixed(4)),
-    min: Number(min.toFixed(4)),
-    max: Number(max.toFixed(4)),
-    verdict
-  };
+  // update UI & draw
+  scoreEl.textContent = score;
+  livesEl.textContent = lives;
+  bouncesEl.textContent = bounces;
+  roundEl.textContent = round;
 
-  reportNote.innerHTML = `<small>Report ready — click "Download Report" to save JSON.</small>`;
+  draw();
+  requestAnimationFrame(step);
+}
+
+// game control
+function startGame() {
+  if (!audioCtx) initAudio();
+  if (running) return;
+  running = true;
+  lastTime = null;
+  startBtn.textContent = 'Restart';
+  score = 0; lives = 3; bounces = 0; round = 1;
+  resetBallToServe();
+  schedulePing();
+  requestAnimationFrame(step);
+}
+function pauseGame() {
+  running = !running;
+  if (!running) {
+    // stop pings
+    if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; }
+    pauseBtn.textContent = 'Resume';
+  } else {
+    schedulePing();
+    pauseBtn.textContent = 'Pause';
+    lastTime = null;
+    requestAnimationFrame(step);
+  }
+}
+function endGame() {
+  running = false;
+  if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; }
+  alert(`Game over! Score: ${score}, Bounces: ${bounces}`);
+  // reset to initial visual
+  resetBallToServe();
+}
+function resetBallToServe() {
+  ball.x = W/2;
+  ball.y = 110;
+  ball.vx = (Math.random() > 0.5 ? 1 : -1) * (140 + Math.random()*120);
+  ball.vy = 50 * (0.8 + Math.random()*0.6);
+  draw();
+}
+function resetBallAfterMiss() {
+  // brief pause and serve again
+  running = false;
+  if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; }
+  setTimeout(() => {
+    ball.x = W/2;
+    ball.y = 80;
+    ball.vx = (Math.random() > 0.5 ? 1 : -1) * (120 + Math.random()*120);
+    ball.vy = 40 + Math.random()*80;
+    running = true;
+    schedulePing();
+    lastTime = null;
+    requestAnimationFrame(step);
+  }, 700);
+}
+
+// audio system: ping based on ball position
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // create a short noise buffer for pops
+  const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.12));
+  window._invisible_noise = noiseBuf; // reuse
+}
+
+// play a ping that hints at ball position
+function playPingNow() {
+  if (!audioCtx || muted) return;
+  // derive stereo pan from ball.x (left -1 .. right 1)
+  const pan = (ball.x / W) * 2 - 1;
+  // derive pitch from vertical distance to ground (closer to paddle => higher freq)
+  const distToPaddle = Math.max(0, paddle.y - ball.y); // >0 when ball is above paddle
+  // map vertical to frequency: far -> low ~300Hz, close -> high ~1200Hz
+  const freq = 300 + Math.max(0, 1 - (distToPaddle / (H))) * 900;
+  const volume = Math.min(1, 0.12 + (1 - (ball.y / H)) * 0.9); // higher when ball higher (optional)
+  playTone(freq, pan, volume, 0.09);
+}
+
+// schedule repeated ping
+function schedulePing() {
+  if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; }
+  pingIntervalId = setInterval(playPingNow, pingInterval);
+  // also play immediately
+  playPingNow();
+}
+
+// play a short tone with panning and envelope
+function playTone(freq, panVal, vol=0.5, dur=0.12) {
+  if (!audioCtx || muted) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  const p = audioCtx.createStereoPanner();
+  o.type = 'sine';
+  o.frequency.value = Math.max(60, freq);
+
+  p.pan.value = Math.max(-1, Math.min(1, panVal));
+  g.gain.value = 0;
+  o.connect(g);
+  g.connect(p);
+  p.connect(audioCtx.destination);
+
+  const t0 = audioCtx.currentTime;
+  g.gain.cancelScheduledValues(t0);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.start(t0);
+  o.stop(t0 + dur + 0.02);
+}
+
+// play pop (for bounce) or wall bounce
+function playPop(isPaddleHit=false) {
+  if (!audioCtx || muted) return;
+  // use short noise burst
+  const buf = window._invisible_noise;
+  const source = audioCtx.createBufferSource();
+  source.buffer = buf;
+  const g = audioCtx.createGain();
+  const p = audioCtx.createStereoPanner();
+
+  // pan based on ball.x
+  const pan = (ball.x / W) * 2 - 1;
+  p.pan.value = pan;
+  source.connect(g);
+  g.connect(p);
+  p.connect(audioCtx.destination);
+
+  // envelope: strong for paddle hit, softer for wall
+  const now = audioCtx.currentTime;
+  g.gain.setValueAtTime(isPaddleHit ? 0.35 : 0.18, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + (isPaddleHit ? 0.22 : 0.18));
+  source.start(now);
+  source.stop(now + 0.23);
+  // small click tone layered
+  playTone(isPaddleHit ? 1200 : 600, pan, isPaddleHit ? 0.15 : 0.09, 0.06);
+}
+
+// wall bounce (soft)
+function playWallBounce() {
+  playTone(420, (ball.x / W) * 2 - 1, 0.06, 0.07);
+}
+
+// miss sound
+function playMiss() {
+  if (!audioCtx || muted) return;
+  playTone(120, 0, 0.2, 0.4);
+  // quick sad descending
+  setTimeout(()=> playTone(220, 0, 0.12, 0.22), 80);
+  setTimeout(()=> playTone(160, 0, 0.09, 0.28), 180);
+}
+
+// controls
+startBtn.addEventListener('click', () => {
+  if (!audioCtx) initAudio();
+  startGame();
+});
+pauseBtn.addEventListener('click', pauseGame);
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'Unmute' : 'Mute';
+});
+revealBtn.addEventListener('click', () => {
+  reveal = !reveal;
+  revealBtn.textContent = reveal ? 'Hide Peek' : 'Peek (cheat)';
+  draw();
 });
 
-// download report
-downloadBtn.addEventListener('click', () => {
-  if (!lastReport) { alert('No report to download — run Analyze first.'); return; }
-  const data = JSON.stringify(lastReport, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pizza-slice-report.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
+// small helper to ensure audioContext is resumed after user gesture (some browsers require)
+document.addEventListener('click', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+}, {once:false});
 
-// initialization draw
+// initial drawing
 draw();
+
+// make sure audioContext is created on first interaction for autoplay policies
+['mousedown','touchstart','keydown'].forEach(ev => {
+  window.addEventListener(ev, () => {
+    if (!audioCtx) {
+      try { initAudio(); } catch(e) { console.warn('Audio init error', e); }
+    }
+  }, {once:true});
+});
 </script>
 </body>
 </html>
