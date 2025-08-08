@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chicken Translator 🐔</title>
+  <style>
+    body {
+      font-family: Comic Sans MS, cursive, sans-serif;
+      background: #fffbe7;
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      font-size: 2.5rem;
+    }
+    textarea {
+      width: 80%;
+      height: 100px;
+      margin: 20px auto;
+      padding: 10px;
+      font-size: 1.2rem;
+    }
+    button {
+      font-size: 1.2rem;
+      padding: 10px 20px;
+      background-color: #ffdf6c;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 5px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #ffe98d;
+    }
+    #output {
+      font-size: 2rem;
+      color: #aa5500;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐣 Chicken Translator</h1>
+  <textarea id="userInput" placeholder="Type anything human..."></textarea><br>
+  <button onclick="translateToChicken()">Translate to Chicken</button>
+  <button onclick="testSound()">🔊 Play Sound Test</button>
+  <div id="output"></div>
+
+  <!-- Reliable Chicken Sounds -->
+  <audio id="chicken1" src="https://www.youtube.com/shorts/q9Alwz0rftE" preload="auto"></audio>
+  <audio id="chicken2" src="https://www.soundjay.com/animal/chicken-2.mp3" preload="auto"></audio>
+  <audio id="chicken3" src="https://www.soundjay.com/animal/rooster-1.mp3" preload="auto"></audio>
+
+  <script>
+    function translateToChicken() {
+      const input = document.getElementById("userInput").value.trim();
+      const output = document.getElementById("output");
+
+      if (input === "") {
+        output.innerText = "🐔 Cluck cluck? (Type something first!)";
+        return;
+      }
+
+      const chickenWords = [
+        "bawk", "buk", "bukaaak", "cluck", "bawk-bawk", 
+        "brrrrk", "buk buk", "ka-ka-ka", "🐔", "🥚"
+      ];
+
+      const wordCount = input.split(/\s+/).length;
+      let chickenTranslation = "";
+
+      for (let i = 0; i < wordCount; i++) {
+        const randomWord = chickenWords[Math.floor(Math.random() * chickenWords.length)];
+        chickenTranslation += randomWord + " ";
+      }
+
+      output.innerText = chickenTranslation.trim();
+      playRandomChickenSound();
+    }
+
+    function playRandomChickenSound() {
+      const sounds = [
+        document.getElementById("chicken1"),
+        document.getElementById("chicken2"),
+        document.getElementById("chicken3")
+      ];
+
+      const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+      try {
+        randomSound.currentTime = 0;
+        randomSound.play().catch(err => {
+          console.error("Playback failed:", err);
+        });
+      } catch (err) {
+        console.error("Audio error:", err);
+      }
+    }
+
+    // Manual test function to verify if sound is working
+    function testSound() {
+      const testAudio = document.getElementById("chicken1");
+      try {
+        testAudio.currentTime = 0;
+        testAudio.play().catch(err => {
+          alert("Audio playback failed. Try clicking again or unmute your tab.");
+          console.error(err);
+        });
+      } catch (err) {
+        alert("Audio failed to play.");
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
