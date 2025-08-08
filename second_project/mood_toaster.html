@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🍕 Pizza Slice Alignment Checker</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:#fffaf0; color:#222; margin:0; padding:20px; display:flex; gap:20px; align-items:flex-start; justify-content:center;}
+  .panel{width:760px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(30,30,50,0.08); padding:16px;}
+  h1{margin:0 0 8px; font-size:20px}
+  .controls{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px}
+  button, input[type=file]{padding:8px 10px; border-radius:8px; border:1px solid #e5e5e5; background:white; cursor:pointer}
+  button.primary{background:#ff8c42; color:white; border:none}
+  canvas{display:block; border-radius:8px; background:#222; max-width:100%; height:auto}
+  .info{margin-top:12px}
+  .stats{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
+  .stat{background:#fff4e8; padding:8px 10px; border-radius:8px; font-weight:600}
+  small{color:#555}
+  .tips{margin-top:10px; font-size:13px; color:#444}
+  .legend{margin-top:8px; display:flex; gap:8px; align-items:center}
+  .dot{width:14px;height:14px;border-radius:4px}
+  .dot.center{background:#2b7cff} .dot.cut{background:#ff4d4d}
+  .bottom{display:flex; gap:8px; margin-top:12px; align-items:center}
+  .report{margin-left:auto}
+</style>
+</head>
+<body>
+  <div class="panel">
+    <h1>🍕 Pizza Slice Alignment Checker</h1>
+    <div class="controls">
+      <input id="fileInput" type="file" accept="image/*">
+      <button id="autoCenterBtn">Auto-Center</button>
+      <button id="clearPointsBtn">Clear Points</button>
+      <button id="analyzeBtn" class="primary">Analyze</button>
+      <button id="downloadBtn">Download Report</button>
+    </div>
+
+    <canvas id="canvas" width="720" height="540"></canvas>
+
+    
+    <div class="legend">
+      <div class="dot center"></div><small>Center</small>
+      <div class="dot cut"></div><small>Marked cut point</small>
+    </div>
+
+    <div class="stats" id="statsArea"></div>
+
+    <div class="info" id="details"></div>
+
+    
+  </div>
+
+<script>
+
+
+const fileInput = document.getElementById('fileInput');
+const autoCenterBtn = document.getElementById('autoCenterBtn');
+const clearPointsBtn = document.getElementById('clearPointsBtn');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statsArea = document.getElementById('statsArea');
+const details = document.getElementById('details');
+const reportNote = document.getElementById('reportNote');
+
+let img = new Image();
+let imgLoaded = false;
+let center = null;      // {x,y}
+let points = [];        // [{x,y,angleDeg}]
+let lastReport = null;
+
+
+function clearCanvas() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+function draw() {
+  clearCanvas();
+  if (imgLoaded) {
+    const cw = canvas.width, ch = canvas.height;
+    const iw = img.width, ih = img.height;
+    const scale = Math.min(cw/iw, ch/ih);
+    const w = iw * scale, h = ih * scale;
+    const x = (cw - w)/2, y = (ch - h)/2;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.save();
+    if (center) {
+      ctx.fillStyle = '#2b7cff';
+      ctx.fillRect(center.x-6, center.y-6, 12, 12);
+    }
+    if (points.length) {
+      ctx.strokeStyle = 'rgba(255,77,77,0.9)';
+      ctx.fillStyle = 'rgba(255,77,77,1)';
+      ctx.lineWidth = 2;
+      for (let i=0;i<points.length;i++){
+        const p = points[i];
+        if (center) {
+          ctx.beginPath();
+          ctx.moveTo(center.x, center.y);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+        ctx.fill();
+        // angle label
+        ctx.fillStyle = '#222';
+        ctx.font = '14px sans-serif';
+        ctx.fillText((p.angleDeg).toFixed(1) + '°', p.x + 8, p.y - 8);
+        ctx.fillStyle = 'rgba(255,77,77,1)';
+      }
+      if (points.length > 1) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = '#f7f7f7';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#999'; ctx.font = '18px sans-serif';
+    ctx.fillText('Upload a pizza photo to start', 20, 40);
+  }
+}
+
+fileInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  img = new Image();
+  img.onload = () => {
+    imgLoaded = true;
+    center = null; points = []; lastReport = null;
+    draw();
+    URL.revokeObjectURL(url);
+  }
+  img.src = url;
+});
+
+canvas.addEventListener('click', (ev) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = ev.clientX - rect.left;
+  const y = ev.clientY - rect.top;
+
+  if (!imgLoaded) {
+    alert('Please upload a pizza image first.');
+    return;
+  }
+
+  if (!center) {
+    center = {x, y};
+    details.innerHTML = '<em>Center set. Now click on the crust where each slice cut meets the edge (one click per cut).</em>';
+    draw();
+    return;
+  }
+
+  const angleRad = Math.atan2(y - center.y, x - center.x);
+  let angleDeg = angleRad * 180 / Math.PI; // -180 .. 180
+  if (angleDeg < 0) angleDeg += 360;       // 0 .. 360
+  points.push({x, y, angleDeg});
+  points.sort((a,b) => a.angleDeg - b.angleDeg);
+  draw();
+});
+
+// auto-center implementation (simple heuristic: center of image area)
+autoCenterBtn.addEventListener('click', () => {
+  if (!imgLoaded) { alert('Upload an image first.'); return; }
+  // set center to canvas center (user still can override by clicking)
+  center = { x: canvas.width/2, y: canvas.height/2 };
+  details.innerHTML = '<em>Auto-center set (canvas center). You can click to set a different center.</em>';
+  draw();
+});
+
+// clear points
+clearPointsBtn.addEventListener('click', () => {
+  center = null; points = []; details.innerHTML = ''; statsArea.innerHTML=''; reportNote.innerHTML='';
+  lastReport = null;
+  draw();
+});
+
+// analyze
+analyzeBtn.addEventListener('click', () => {
+
+  // compute slice angles (differences between successive point angles, account for wrap)
+  const angles = points.map(p => p.angleDeg).sort((a,b)=>a-b);
+  const diffs = [];
+  for (let i=0;i<angles.length;i++){
+    const a1 = angles[i];
+    const a2 = angles[(i+1) % angles.length];
+    // angular difference clockwise from a1 to a2
+    let diff = a2 - a1;
+    if (i === angles.length - 1) { // wrap-around
+      diff = (angles[0] + 360) - angles[i];
+    }
+    // normalize diff into (0,360)
+    if (diff < 0) diff += 360;
+    diffs.push(diff);
+  }
+
+  // compute stats: mean, std, min, max
+  const n = diffs.length;
+  const mean = diffs.reduce((s,v)=>s+v,0) / n;
+  const variance = diffs.reduce((s,v)=>s + Math.pow(v - mean, 2), 0) / n;
+  const std = Math.sqrt(variance);
+  const min = Math.min(...diffs);
+  const max = Math.max(...diffs);
+
+  // verdict rules (tweakable)
+  // If std < 3 degrees -> nearly perfect; <8 pretty good; else uneven
+  let verdict = '';
+  if (std <= 3) verdict = 'Mathematically perfect 🍕✅ — looks expertly sliced!';
+  else if (std <= 8) verdict = 'Pretty good — slightly uneven but acceptable.';
+  else verdict = 'Criminally uneven ⚖️🚨 — blame the chef or the table spinner.';
+
+  // present results
+  statsArea.innerHTML = `
+    <div class="stat">Slices detected: ${n}</div>
+    <div class="stat">Mean angle: ${mean.toFixed(2)}°</div>
+    <div class="stat">Std dev: ${std.toFixed(2)}°</div>
+    <div class="stat">Smallest slice: ${min.toFixed(2)}°</div>
+    <div class="stat">Largest slice: ${max.toFixed(2)}°</div>
+  `;
+
+  // detailed list of slices
+  let detailHtml = `<h3>Slice angles (clockwise, in degrees):</h3><ol>`;
+  for (let i=0;i<diffs.length;i++){
+    detailHtml += `<li>${diffs[i].toFixed(2)}°</li>`;
+  }
+  detailHtml += `</ol><p><strong>Verdict:</strong> ${verdict}</p>`;
+  details.innerHTML = detailHtml;
+
+  // store last report for download
+  lastReport = {
+    timestamp: new Date().toISOString(),
+    slices: diffs.map(d => Number(d.toFixed(4))),
+    mean: Number(mean.toFixed(4)),
+    std: Number(std.toFixed(4)),
+    min: Number(min.toFixed(4)),
+    max: Number(max.toFixed(4)),
+    verdict
+  };
+
+  reportNote.innerHTML = `<small>Report ready — click "Download Report" to save JSON.</small>`;
+});
+
+// download report
+downloadBtn.addEventListener('click', () => {
+  if (!lastReport) { alert('No report to download — run Analyze first.'); return; }
+  const data = JSON.stringify(lastReport, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pizza-slice-report.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+// initialization draw
+draw();
+</script>
+</body>
+</html>
