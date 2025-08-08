@@ -51,14 +51,11 @@ chicken sound will come out
 ### Project Demo
 # Video
 
-
-
-
-
-
+https://youtu.be/_0aGZ7e4l2A?si=yYp1PbjcBIHYn5M2 
 
 # Additional Demos
-[Add any extra demo materials/links]
+useless-projects-five.vercel.app
+
 
 ## Team Contributions
 - Anjana.M: Frontend
