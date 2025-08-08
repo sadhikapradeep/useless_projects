@@ -33,7 +33,7 @@ For Software:
 For Software:
 
 # Screenshots (Add at least 3)
-<img width="1902" height="880" alt="image" src="1.png"  />
+<img width="1902" height="880" alt="image" src="1.jpg"  />
 
 
 ![Screenshot2](Add screenshot 2 here with proper name)
