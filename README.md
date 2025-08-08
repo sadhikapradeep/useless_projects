@@ -31,9 +31,20 @@ For Software:
 
 ### Project Documentation
 For Software:
+Enter anything in the text field
+<img width="250" height="250" alt="Screenshot 2025-08-09 012412 - Copy" src="https://github.com/user-attachments/assets/4bd73c9a-8694-4029-adfe-eb6f970e6adb" />
+
+click the transalate botton
+<img width="250" height="250" alt="image" src="https://github.com/user-attachments/assets/7d080fce-ffde-4740-a4f5-b910608ede9f" />
+
+chicken sound will come out
+<img width="250" height="250" alt="Screenshot 2025-08-09 012435" src="https://github.com/user-attachments/assets/a4f011b8-6bb3-45f0-a586-3fe7530ffa86" />
+
+
+
+
 
 # Screenshots (Add at least 3)
-<img width="192" height="80" alt="image" src="https://github.com/user-attachments/assets/7d080fce-ffde-4740-a4f5-b910608ede9f" />
 
 
 ![Screenshot2](Add screenshot 2 here with proper name)
