@@ -31,6 +31,8 @@ For Software:
 
 ### Project Documentation
 For Software:
+
+# Screenshots (Add at least 3)
 Enter anything in the text field
 <img width="250" height="250" alt="Screenshot 2025-08-09 012412 - Copy" src="https://github.com/user-attachments/assets/4bd73c9a-8694-4029-adfe-eb6f970e6adb" />
 
@@ -41,53 +43,27 @@ chicken sound will come out
 <img width="250" height="250" alt="Screenshot 2025-08-09 012435" src="https://github.com/user-attachments/assets/a4f011b8-6bb3-45f0-a586-3fe7530ffa86" />
 
 
-
-
-
-# Screenshots (Add at least 3)
-
-
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
-
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
-
-# Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
-
-For Hardware:
-
-# Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
-
-![Schematic](Add your schematic diagram here)
-*Add caption explaining the schematic*
-
 # Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
 
-![Build](Add photos of build process here)
-*Explain the build steps*
+![WhatsApp Image 2025-08-09 at 02 01 12_847e48d1](https://github.com/user-attachments/assets/ea94a9ef-ab68-4032-b8f8-001740016dab)
 
-![Final](Add photo of final product here)
-*Explain the final build*
 
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+
+
+
+
+
+
 
 # Additional Demos
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+- Anjana.M: Frontend
+- Sadhika Pradeep: Frontend
+
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
